@@ -1,0 +1,147 @@
+
+CREATE database ecommerce;
+
+use ecommerce;
+
+-- criar tabela cliente com preenchimento de CPF ou CNPJ, mas sem as 2 informações ao mesmo tempo
+create table clients (
+	idClient int auto_increment primary key,
+    Fname varchar(10),
+    Minit char(3),
+    Lname varchar (20),
+    CPF char(11) NOT NULL,
+    CNPJ char(15),
+    Address varchar(255),
+	constraint unique_cpf_client unique(CPF),
+    constraint unique_cnpj_client unique(CNPJ),
+    CONSTRAINT CHK_clients check (CPF is not null and CNPJ is NULL or 
+					CNPJ is not null and CNPJ is NULL)
+);
+
+-- criar tabela produto
+-- size equivale a dimensão do produto
+create table product(
+	idProduct int auto_increment,
+    UnitPrice float NOT NULL,
+    Pname varchar(10) not null,
+    classification_kids boolean default false,
+    category enum('eletrônico', 'Vestuário', 'Brinquedos', 'Alimentos', 'móveis') not null,
+    avaliação float default 0,
+    size varchar(10),
+    ProductDesc varchar(45),
+    primary key (idProduct, UnitPrice)
+    );
+
+-- criar tabela pedido
+create table orders(
+	idOrders int auto_increment,
+    sendvalue float default 10,
+	idOrdersClient int,
+	ordersStatus enum('Cancelado', 'Confirmado', 'Em processamento') default 'Em processamento',
+	orderdescription varchar (225),
+	primary key (idOrders, sendvalue),
+	constraint fk_orders_client foreign key (idOrdersClient) references clients(idClient)
+		on update cascade
+				);
+
+-- criar tabela pagamentos com cadastro de mais de uma forma de pagamento
+create table payment(
+		idPOrders int,
+		id_payment int,
+        typePayment enum('PIX', 'boleto', 'cartão de crédito', 'cartão de débito', 'dois cartões') not null DEFAULT 'PIX',
+		primary key(id_payment),
+        constraint fk_payment_orders foreign key (idPOrders) references orders(idOrders)
+	);
+    
+
+-- criar tabale entrega com status e código de rastreio
+create table delivery (
+	idDelivery int auto_increment primary key,
+	idDOrders int,
+	DeliveryStatus ENUM('Faturado', 'Enviado', 'Em trânsito', 'Saiu para entrega', 'Entregue') default 'Faturado',
+	CodDelivery varchar(45) unique,
+	constraint fk_delivery_orders foreign key (idDOrders) references orders(idOrders)
+	);
+    
+-- criar tabela estoque
+create table productStorage(
+	idProdStorage int auto_increment primary key,
+    storageLocation varchar(255),
+    quantity int default 0
+    );
+    
+-- criar tabela fornecedor
+create table supplier (
+	idSupplier int auto_increment primary key,
+    SocialName varchar(255) not null,
+    CNPJ char(15) not null,
+    contact char(11) not null,
+    constraint unique_supplier unique (CNPJ)
+);
+
+-- criar tabela vendedor
+create table seller(
+	idSeller int auto_increment primary key,
+    SocialName varchar(255) not null,
+    AbstName varchar(255),
+    CNPJ char(15),
+    CPF char(9),
+    location varchar(255),
+    constraint unique_cnpj_seller unique(CNPJ),
+    constraint unique_cpf_seller unique (CPF)
+);
+
+-- criar a tabela fornecedor
+create table productSeller(
+	idPSeller int,
+    idPProduct int,
+    prodQuantity int default 1,
+    contact char(11) not null,
+    primary key (idPSeller, idPProduct),
+    constraint fk_product_seller foreign key (idPSeller) references seller (idSeller),
+    constraint fk_product_product foreign key (idPProduct) references product(idProduct)
+);
+
+-- criar tabela relação produto-pedido
+-- criar tabela relação produto-pedido
+create table productOrder(
+	idPOProduct int,
+    idPOrder int,
+    poQuantity int default 1,
+    poStatus enum('Disponível', 'Sem Estoque') default 'Disponível',
+    primary key (idPOProduct, idPOrder),
+    constraint fk_productorder_seller foreign key (idPOproduct) references product (idProduct),
+    constraint fk_productorder_product foreign key (idPOrder) references orders(idOrders)
+    );
+    
+-- criar tabela localização do estoque
+create table storageLocation(
+	idLproduct int,
+    idLstorage int,
+    location varchar(255) not null,
+    primary key (idLproduct, idLstorage),
+    constraint fk_storage_location_seller foreign key (idLproduct) references product(idProduct),
+    constraint fk_stored_location_storage foreign key (idLstorage) references productStorage(idProdStorage)
+);
+
+-- criar tabela produto por vendedor
+create table productSupplier(
+	idPsSupplier int,
+    idPsProduct int,
+    quantity int not null,
+    primary key (idPsSupplier, idPsProduct),
+    constraint fk_product_supplier_supplier foreign key (idPsSupplier) references supplier(idSupplier),
+    constraint fk_product_supplier_product foreign key (idPsProduct) references product(idProduct)
+);
+
+-- alterações nas tabelas
+alter table clients auto_increment = 1;
+alter table seller auto_increment = 1;
+alter table supplier auto_increment = 1;
+alter table productStorage auto_increment = 1;
+alter table orders auto_increment = 1;
+alter table product auto_increment = 1;
+alter table product modify column Pname varchar(30);
+alter table product modify column UnitPrice float default 0;
+alter table seller add column contact char(11) not null;
+alter table productseller drop column contact;
