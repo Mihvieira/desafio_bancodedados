@@ -15,7 +15,7 @@ create table clients (
 	constraint unique_cpf_client unique(CPF),
     constraint unique_cnpj_client unique(CNPJ),
     CONSTRAINT CHK_clients check (CPF is not null and CNPJ is NULL or 
-					CNPJ is not null and CNPJ is NULL)
+					CNPJ is not null and CPF is NULL)
 );
 
 -- criar tabela produto
